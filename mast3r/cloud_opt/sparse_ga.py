@@ -549,7 +549,14 @@ def forward_mast3r(pairs, model, cache_path, desc_conf='desc_conf',
         if not all(os.path.isfile(p) for p in (path1, path2, path_corres)):
             if model is None:
                 continue
-            res = symmetric_inference(model, img1, img2, device=device)
+            if True:
+                res = symmetric_inference(model, img1, img2, device=device)
+            else:
+                shape1 = torch.from_numpy(img1['true_shape']).to(device, non_blocking=True)
+                shape2 = torch.from_numpy(img2['true_shape']).to(device, non_blocking=True)
+                img1_ = img1['img'].to(device, non_blocking=True)
+                img2_ = img2['img'].to(device, non_blocking=True)
+                res = model (img1_, img2_, shape1, shape2)
             X11, X21, X22, X12 = [r['pts3d'][0] for r in res]
             C11, C21, C22, C12 = [r['conf'][0] for r in res]
             descs = [r['desc'][0] for r in res]
