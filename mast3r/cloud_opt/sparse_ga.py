@@ -644,10 +644,10 @@ def prepare_canonical_data(imgs, tmp_pairs, subsample, order_imgs=False, min_con
     pairwise_scores = torch.zeros((len(imgs), len(imgs)), device=device)
     canonical_paths = []
     preds_21 = {}
-
+    mode = kw.get('mode')
     for img in tqdm(imgs):
         if cache_path:
-            cache = os.path.join(cache_path, 'canon_views', hash_md5(img) + f'_{subsample=}_{kw=}.pth')
+            cache = os.path.join(cache_path, 'canon_views', hash_md5(img) + f'_{subsample=}_mode={mode}.pth')
             canonical_paths.append(cache)
         try:
             (canon, canon2, cconf), focal = torch.load(cache, map_location=device)
