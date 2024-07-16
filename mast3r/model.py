@@ -67,6 +67,12 @@ class AsymmetricMASt3R(AsymmetricCroCo3DStereo):
         self.head1 = transpose_to_landscape(self.downstream_head1, activate=landscape_only)
         self.head2 = transpose_to_landscape(self.downstream_head2, activate=landscape_only)
 
+    def decoder(self, feat1, feat2, pos1, pos2, shape1, shape2):
+        dec1, dec2 = self._decoder(feat1, pos1, feat2, pos2)
+        #with torch.cuda.amp.autocast(enabled=False):
+        res1 = self._downstream_head(1, [tok.float() for tok in dec1], shape1)
+        res2 = self._downstream_head(2, [tok.float() for tok in dec2], shape2)
+        return res1, res2
     def forward(self, img1, img2, shape1, shape2):
         # compute encoder only once
         x, pos = self.patch_embed(torch.cat((img1, img2), dim=0), true_shape=torch.cat((shape1, shape2), dim=0))
@@ -76,16 +82,10 @@ class AsymmetricMASt3R(AsymmetricCroCo3DStereo):
         x = self.enc_norm(x)
         feat1, feat2 = x.chunk(2, dim=0)
         pos1, pos2 = pos.chunk(2, dim=0)
-        def decoder(feat1, feat2, pos1, pos2, shape1, shape2):
-            dec1, dec2 = self._decoder(feat1, pos1, feat2, pos2)
-            with torch.cuda.amp.autocast(enabled=False):
-                res1 = self._downstream_head(1, [tok.float() for tok in dec1], shape1)
-                res2 = self._downstream_head(2, [tok.float() for tok in dec2], shape2)
-            return res1, res2
 
         # decoder 1-2
-        res11, res21 = decoder(feat1, feat2, pos1, pos2, shape1, shape2)
+        res11, res21 = self.decoder(feat1, feat2, pos1, pos2, shape1, shape2)
         # decoder 2-1
-        res22, res12 = decoder(feat2, feat1, pos2, pos1, shape2, shape1)
+        res22, res12 = self.decoder(feat2, feat1, pos2, pos1, shape2, shape1)
 
         return (res11, res21, res22, res12)
