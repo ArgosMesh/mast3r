@@ -175,13 +175,4 @@ if __name__ == '__main__':
     img2 = img2['img'].to(args.device, non_blocking=True)
     print(img1.shape, img2.shape)
     input = (img1, img2, shape1, shape2)
-    # feat1, feat2, pos1, pos2 = torch_model(img1, img2, shape1, shape2)
-    # torch.save(feat1, output_dir+'/feat1.pth')
-    # torch.save(feat2, output_dir+'/feat2.pth')
-    # torch.save(pos1, output_dir+'/pos1.pth')
-    # torch.save(pos2, output_dir+'/pos2.pth')
-    # del feat1, feat2, pos1, pos2
-    torch.save(shape1, 'input'+'/shape1.pth')
-    torch.save(shape2, 'input'+'/shape2.pth')
-    
-    # torch.onnx.export(torch_model, input, os.path.join(output_dir, 'mast3r_encoder_params.onnx'), export_params=True, opset_version=17, do_constant_folding=True, verbose=True)
+    torch.onnx.export(torch_model, input, os.path.join(output_dir, 'mast3r_encoder_params.onnx'), export_params=True, opset_version=17, do_constant_folding=True, verbose=True)
