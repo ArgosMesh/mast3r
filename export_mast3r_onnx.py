@@ -10,7 +10,7 @@ from scipy.spatial.transform import Rotation
 
 from mast3r.cloud_opt.sparse_ga import sparse_global_alignment
 from mast3r.cloud_opt.tsdf_optimizer import TSDFPostProcess
-from mast3r.model import AsymmetricMASt3R
+from mast3r.model_complete import AsymmetricMASt3R
 from mast3r.utils.misc import hash_md5
 import mast3r.utils.path_to_dust3r  # noqa
 from dust3r.image_pairs import make_pairs

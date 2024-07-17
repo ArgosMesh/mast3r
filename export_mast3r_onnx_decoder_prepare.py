@@ -182,5 +182,3 @@ if __name__ == '__main__':
     torch.save(pos2, 'input'+'/pos2.pth')
     torch.save(shape1, 'input'+'/shape1.pth')
     torch.save(shape2, 'input'+'/shape2.pth')
-    
-    # torch.onnx.export(torch_model, input, os.path.join(output_dir, 'mast3r_encoder_params.onnx'), export_params=True, opset_version=17, do_constant_folding=True, verbose=True)
