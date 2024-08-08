@@ -114,7 +114,8 @@ The mapfree dataset license in particular is very restrictive. For more informat
 
 ### Interactive demo
 
-There are two demos available:
+We made one huggingface space running the new sparse global alignment in a simplified demo for small scenes: [naver/MASt3R](https://huggingface.co/spaces/naver/MASt3R)
+There are two demos available to run locally:
 
 ```
 demo.py is the updated demo for MASt3R. It uses our new sparse global alignment method that allows you to reconstruct larger scenes
@@ -129,9 +130,35 @@ python3 demo.py --model_name MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric
 demo_dust3r_ga.py is the same demo as in dust3r (+ compatibility for MASt3R models)
 see https://github.com/naver/dust3r?tab=readme-ov-file#interactive-demo for details
 ```
+
 ### Interactive demo with docker
 
-TODO
+To run MASt3R using Docker, including with NVIDIA CUDA support, follow these instructions:
+
+1. **Install Docker**: If not already installed, download and install `docker` and `docker compose` from the [Docker website](https://www.docker.com/get-started).
+
+2. **Install NVIDIA Docker Toolkit**: For GPU support, install the NVIDIA Docker toolkit from the [Nvidia website](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
+3. **Build the Docker image and run it**: `cd` into the `./docker` directory and run the following commands: 
+
+```bash
+cd docker
+bash run.sh --with-cuda --model_name="MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric"
+```
+
+Or if you want to run the demo without CUDA support, run the following command:
+
+```bash 
+cd docker
+bash run.sh --model_name="MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric"
+```
+
+By default, `demo.py` is lanched with the option `--local_network`.  
+Visit `http://localhost:7860/` to access the web UI (or replace `localhost` with the machine's name to access it from the network).  
+
+`run.sh` will launch docker-compose using either the [docker-compose-cuda.yml](docker/docker-compose-cuda.yml) or [docker-compose-cpu.ym](docker/docker-compose-cpu.yml) config file, then it starts the demo using [entrypoint.sh](docker/files/entrypoint.sh).
+
+___
 
 ![demo](assets/demo.jpg)
 
@@ -218,7 +245,7 @@ In this section, we present a short demonstration to get started with training M
 
 ### Datasets
 
-See [Datasets section in DUSt3R](https://github.com/naver/dust3r/tree/datasets?tab=readme-ov-file#datasets)
+See [Datasets section in DUSt3R](https://github.com/naver/dust3r?tab=readme-ov-file#datasets)
 
 ### Demo
 
@@ -252,7 +279,7 @@ torchrun --nproc_per_node=4 train.py \
     --test_criterion "Regr3D_ScaleShiftInv(L21, norm_mode='?avg_dis', gt_scale=True, sky_loss_value=0) + -1.*MatchingLoss(APLoss(nq='torch', fp=torch.float16), negatives_padding=12288)" \
     --pretrained "checkpoints/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth" \
     --lr 0.0001 --min_lr 1e-06 --warmup_epochs 1 --epochs 10 --batch_size 4 --accum_iter 4 \
-    --save_freq 1 --keep_freq 5 --eval_freq 1 \
+    --save_freq 1 --keep_freq 5 --eval_freq 1 --disable_cudnn_benchmark \
     --output_dir "checkpoints/mast3r_demo"
 
 ```
@@ -272,7 +299,7 @@ torchrun --nproc_per_node=8 train.py \
     --test_criterion "Regr3D(L21, norm_mode='?avg_dis', gt_scale=True, sky_loss_value=0) + -1.*MatchingLoss(APLoss(nq='torch', fp=torch.float16), negatives_padding=12288)" \
     --pretrained "checkpoints/DUSt3R_ViTLarge_BaseDecoder_512_dpt.pth" \
     --lr 0.0001 --min_lr 1e-06 --warmup_epochs 8 --epochs 50 --batch_size 4 --accum_iter 2 \
-    --save_freq 1 --keep_freq 5 --eval_freq 1 --print_freq=10 \
+    --save_freq 1 --keep_freq 5 --eval_freq 1 --print_freq=10 --disable_cudnn_benchmark \
     --output_dir "checkpoints/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric"
 
 ```
@@ -311,6 +338,6 @@ python3 visloc.py --model_name MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric 
 
 # Cambridge Landmarks:
 # scene in 'ShopFacade' 'GreatCourt' 'KingsCollege' 'OldHospital' 'StMarysChurch'
-python3 visloc.py --model_name MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric --dataset "VislocCambridgeLandmarks('/path/to/prepared/Cambridge_Landmarks/', subscene='${scene}', pairsfile='APGeM-LM18_top20', topk=1)" --pixel_tol 5 --pnp_mode poselib --reprojection_error_diag_ratio 0.008 --output_dir /path/to/output/Cambridge_Landmarks/${scene}/loc
+python3 visloc.py --model_name MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric --dataset "VislocCambridgeLandmarks('/path/to/prepared/Cambridge_Landmarks/', subscene='${scene}', pairsfile='APGeM-LM18_top50', topk=20)" --pixel_tol 5 --pnp_mode poselib --reprojection_error_diag_ratio 0.008 --output_dir /path/to/output/Cambridge_Landmarks/${scene}/loc
 
 ```

@@ -14,6 +14,7 @@ import os
 from collections import namedtuple
 from functools import lru_cache
 from scipy import sparse as sp
+import copy
 
 from mast3r.utils.misc import mkdir_for, hash_md5
 from mast3r.cloud_opt.utils.losses import gamma_loss
@@ -143,7 +144,7 @@ def sparse_global_alignment(imgs, pairs_in, cache_path, model, subsample=8, desc
     # min_spanning_tree = {(imgs[i],imgs[j]) for i,j in mst[1]}
     # tmp_pairs = {(a,b):v for (a,b),v in tmp_pairs.items() if {(a,b),(b,a)} & min_spanning_tree}
 
-    # smartly combine all usefull data
+    # smartly combine all useful data
     imsizes, pps, base_focals, core_depth, anchors, corres, corres2d, preds_21 = \
         condense_data(imgs, tmp_pairs, canonical_views, preds_21, dtype)
 
@@ -166,7 +167,7 @@ def sparse_scene_optimizer(imgs, subsample, imsizes, pps, base_focals, core_dept
                            init={}, device='cuda', dtype=torch.float32,
                            matching_conf_thr=5., loss_dust3r_w=0.01,
                            verbose=True, dbg=()):
-
+    init = copy.deepcopy(init)
     # extrinsic parameters
     vec0001 = torch.tensor((0, 0, 0, 1), dtype=dtype, device=device)
     quats = [nn.Parameter(vec0001.clone()) for _ in range(len(imgs))]
@@ -305,14 +306,6 @@ def sparse_scene_optimizer(imgs, subsample, imsizes, pps, base_focals, core_dept
     is_matching_ok = {}
     for s in imgs_slices:
         is_matching_ok[s.img1, s.img2] = matching_check(s.confs)
-
-    # Subsample preds_21
-    subsamp_preds_21 = {}
-    for imk, imv in preds_21.items():
-        subsamp_preds_21[imk] = {}
-        for im2k, (pred, conf) in preds_21[imk].items():
-            idxs = anchors[imgs.index(im2k)][1]
-            subsamp_preds_21[imk][im2k] = (pred[idxs], conf[idxs])  # anchors subsample
 
     # Prepare slices and corres for losses
     dust3r_slices = [s for s in imgs_slices if not is_matching_ok[s.img1, s.img2]]
@@ -838,7 +831,8 @@ def canonical_view(ptmaps11, confs11, subsample, mode='avg-angle'):
     canon_depth = ptmaps11[..., 2].unsqueeze(1)
     S = slice(subsample // 2, None, subsample)
     center_depth = canon_depth[:, :, S, S]
-    assert (center_depth > 0).all()
+    center_depth = torch.clip(center_depth, min=torch.finfo(center_depth.dtype).eps)
+
     stacked_depth = F.pixel_unshuffle(canon_depth, subsample)
     stacked_confs = F.pixel_unshuffle(confs11[:, None, :, :, 0], subsample)
 
