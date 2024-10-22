@@ -1,4 +1,4 @@
 [submodule "dust3r"]
 	path = dust3r
-	url = https://github.com/naver/dust3r
-	branch = cvpr
+	url = https://github.com/argosmesh/dust3r
+	branch = argos
